@@ -7,6 +7,7 @@ import {
   MapControls,
   MapMarker,
   MarkerContent,
+  MarkerLabel,
   MarkerTooltip,
 } from "@/components/ui/map";
 
@@ -73,6 +74,12 @@ function LiveMap({
           <MapMarker longitude={me.lng} latitude={me.lat}>
             <MarkerContent>
               <div className="h-4 w-4 rounded-full border-2 border-white bg-emerald-500 shadow-lg" />
+              <MarkerLabel
+                position="bottom"
+                className="mt-1 rounded-md border border-emerald-200/35 bg-emerald-500/25 px-1.5 py-0.5 font-mono text-[10px] text-emerald-100"
+              >
+                eu
+              </MarkerLabel>
             </MarkerContent>
             <MarkerTooltip>
               <span className="font-mono text-xs">eu</span>
@@ -96,6 +103,16 @@ function LiveMap({
                     : "border-white bg-blue-500"
                 }`}
               />
+              <MarkerLabel
+                position="bottom"
+                className={`mt-1 rounded-md border px-1.5 py-0.5 font-mono text-[10px] ${
+                  focusedUserId === u.id
+                    ? "border-cyan-200/50 bg-cyan-500/20 text-cyan-100"
+                    : "border-white/20 bg-black/55 text-zinc-100"
+                }`}
+              >
+                {shortId(u.id)}
+              </MarkerLabel>
             </MarkerContent>
             <MarkerTooltip>
               <span className="font-mono text-xs">{shortId(u.id)}</span>
