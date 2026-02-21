@@ -4,7 +4,7 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { LiveUser, LocationUpdate } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Loader2 } from "lucide-react";
 
 import { socket } from "@/lib/socket";
 const LiveMap = lazy(() => import("@/components/LiveMap"));
@@ -35,6 +35,18 @@ function getInitialGeoError() {
   return null;
 }
 
+async function isGeolocationBlockedByBrowser() {
+  if (typeof navigator === "undefined" || !("permissions" in navigator)) return false;
+  try {
+    const status = await navigator.permissions.query({
+      name: "geolocation" as PermissionName,
+    });
+    return status.state === "denied";
+  } catch {
+    return false;
+  }
+}
+
 type MapFocusTarget = {
   lat: number;
   lng: number;
@@ -51,10 +63,12 @@ export default function App() {
   const [isPanelOpen, setIsPanelOpen] = useState(true);
   const [isLocationOpen, setIsLocationOpen] = useState(true);
   const [isUsersOpen, setIsUsersOpen] = useState(true);
+  const [isGeoRetrying, setIsGeoRetrying] = useState(false);
   const [mapFocusTarget, setMapFocusTarget] = useState<MapFocusTarget | null>(null);
   const [focusedUserId, setFocusedUserId] = useState<string | null>(null);
 
   const lastSentAt = useRef(0);
+  const geoRetryTimeoutRef = useRef<number | null>(null);
 
   // Receber users em tempo real
   useEffect(() => {
@@ -97,6 +111,11 @@ export default function App() {
 
         setMe({ lat, lng });
         setGeoError((current) => (current ? null : current));
+        setIsGeoRetrying(false);
+        if (geoRetryTimeoutRef.current !== null) {
+          window.clearTimeout(geoRetryTimeoutRef.current);
+          geoRetryTimeoutRef.current = null;
+        }
 
         const now = Date.now();
         if (now - lastSentAt.current < 2000) return;
@@ -115,6 +134,11 @@ export default function App() {
         }
 
         setGeoError(geolocationErrorMessage(err));
+        setIsGeoRetrying(false);
+        if (geoRetryTimeoutRef.current !== null) {
+          window.clearTimeout(geoRetryTimeoutRef.current);
+          geoRetryTimeoutRef.current = null;
+        }
       },
       {
         enableHighAccuracy,
@@ -130,6 +154,14 @@ export default function App() {
       if (watchId !== -1) navigator.geolocation.clearWatch(watchId);
     };
   }, [geoRetryNonce]);
+
+  useEffect(() => {
+    return () => {
+      if (geoRetryTimeoutRef.current !== null) {
+        window.clearTimeout(geoRetryTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Mantem a ordem visual estável: cada user fica na posição em que entrou.
   useEffect(() => {
@@ -170,8 +202,63 @@ export default function App() {
     window.isSecureContext;
 
   const retryGeolocation = () => {
-    setGeoError(getInitialGeoError());
+    if (isGeoRetrying) return;
+    setIsGeoRetrying(true);
+
+    const initialError = getInitialGeoError();
+    if (initialError) {
+      setGeoError(initialError);
+      setIsGeoRetrying(false);
+      return;
+    }
+
+    // Restart watch immediately (helps when permission was changed in browser settings).
     setGeoRetryNonce((v) => v + 1);
+
+    // Ask location again from this click gesture. Some browsers only show the prompt reliably here.
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+
+        setMe({ lat, lng });
+        setGeoError(null);
+
+        const now = Date.now();
+        if (now - lastSentAt.current >= 2000) {
+          lastSentAt.current = now;
+          socket.emit("location:update", { lat, lng });
+        }
+        setIsGeoRetrying(false);
+        if (geoRetryTimeoutRef.current !== null) {
+          window.clearTimeout(geoRetryTimeoutRef.current);
+          geoRetryTimeoutRef.current = null;
+        }
+      },
+      async (err) => {
+        const blocked = await isGeolocationBlockedByBrowser();
+        if (blocked) {
+          setGeoError(
+            "Permissão de geolocalização bloqueada. Ative nas definições do site e tente novamente."
+          );
+          setIsGeoRetrying(false);
+          return;
+        }
+
+        setGeoError(geolocationErrorMessage(err));
+        setIsGeoRetrying(false);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+
+    geoRetryTimeoutRef.current = window.setTimeout(() => {
+      setIsGeoRetrying(false);
+      geoRetryTimeoutRef.current = null;
+    }, 12000);
   };
 
   const focusOnUser = (user: LiveUser) => {
@@ -278,9 +365,17 @@ export default function App() {
                     <button
                       type="button"
                       onClick={retryGeolocation}
+                      disabled={isGeoRetrying}
                       className="inline-flex items-center rounded-lg border border-white/15 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-100 hover:bg-zinc-800"
                     >
-                      Tentar novamente
+                      {isGeoRetrying ? (
+                        <>
+                          <Loader2 className="mr-1.5 size-3.5 animate-spin" />
+                          A verificar localização...
+                        </>
+                      ) : (
+                        "Tentar novamente"
+                      )}
                     </button>
                   )}
                 </div>
