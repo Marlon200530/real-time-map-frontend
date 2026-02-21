@@ -1,5 +1,6 @@
 import "./App.css";
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 import type { LiveUser, LocationUpdate } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -512,6 +513,7 @@ export default function App() {
         </Card>
       </aside>
       )}
+      <SpeedInsights />
     </div>
   );
 }
