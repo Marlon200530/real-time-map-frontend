@@ -4,7 +4,15 @@ import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import type { LiveUser, LocationUpdate } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Loader2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  Loader2,
+  Moon,
+  Sun,
+} from "lucide-react";
 
 import { socket } from "@/lib/socket";
 const LiveMap = lazy(() => import("@/components/LiveMap"));
@@ -35,6 +43,17 @@ function getInitialGeoError() {
   return null;
 }
 
+function getInitialThemeMode(): "light" | "dark" {
+  if (typeof window === "undefined") return "dark";
+
+  const saved = window.localStorage.getItem("theme-mode");
+  if (saved === "light" || saved === "dark") return saved;
+
+  return window.matchMedia("(prefers-color-scheme: dark)").matches
+    ? "dark"
+    : "light";
+}
+
 async function isGeolocationBlockedByBrowser() {
   if (typeof navigator === "undefined" || !("permissions" in navigator)) return false;
   try {
@@ -54,6 +73,7 @@ type MapFocusTarget = {
 };
 
 export default function App() {
+  const [themeMode, setThemeMode] = useState<"light" | "dark">(getInitialThemeMode);
   const [me, setMe] = useState<LocationUpdate | null>(null);
   const [users, setUsers] = useState<LiveUser[]>([]);
   const [userOrder, setUserOrder] = useState<string[]>([]);
@@ -69,6 +89,13 @@ export default function App() {
 
   const lastSentAt = useRef(0);
   const geoRetryTimeoutRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", themeMode === "dark");
+    document.documentElement.classList.toggle("light", themeMode === "light");
+    document.documentElement.style.colorScheme = themeMode;
+    window.localStorage.setItem("theme-mode", themeMode);
+  }, [themeMode]);
 
   // Receber users em tempo real
   useEffect(() => {
@@ -271,9 +298,18 @@ export default function App() {
     });
   };
 
+  const shellBackground =
+    themeMode === "dark"
+      ? "bg-[radial-gradient(1200px_700px_at_75%_-10%,rgba(61,116,255,0.18),transparent_60%),radial-gradient(900px_420px_at_10%_115%,rgba(5,209,195,0.16),transparent_60%),linear-gradient(140deg,#06080f_0%,#0a1220_55%,#0f1b2d_100%)]"
+      : "bg-[radial-gradient(1200px_700px_at_75%_-10%,rgba(71,85,105,0.14),transparent_60%),radial-gradient(900px_420px_at_10%_115%,rgba(56,189,248,0.10),transparent_60%),linear-gradient(140deg,#e2e8f0_0%,#e8edf5_55%,#f1f5f9_100%)]";
+  const mapFallbackBackground =
+    themeMode === "dark"
+      ? "bg-[linear-gradient(135deg,#111826,#0a1220)]"
+      : "bg-[linear-gradient(135deg,#dbe4ef,#edf2f7)]";
+
   return (
     <div
-      className={`min-h-dvh bg-[radial-gradient(1200px_700px_at_75%_-10%,rgba(61,116,255,0.18),transparent_60%),radial-gradient(900px_420px_at_10%_115%,rgba(5,209,195,0.16),transparent_60%),linear-gradient(140deg,#06080f_0%,#0a1220_55%,#0f1b2d_100%)] md:h-dvh md:grid md:overflow-hidden ${
+      className={`min-h-dvh ${shellBackground} md:h-dvh md:grid md:overflow-hidden ${
         isPanelOpen ? "md:grid-cols-[minmax(0,1fr)_380px]" : "md:grid-cols-1"
       }`}
     >
@@ -287,7 +323,7 @@ export default function App() {
           type="button"
           onClick={() => setIsPanelOpen((v) => !v)}
           aria-label={isPanelOpen ? "Fechar painel" : "Abrir painel"}
-          className="fixed left-3 top-[max(env(safe-area-inset-top),0.75rem)] z-40 inline-flex items-center gap-2 rounded-lg border border-white/20 bg-black/55 px-3 py-2 text-xs font-medium text-zinc-100 shadow-lg backdrop-blur-md hover:bg-black/70"
+          className="fixed left-3 top-[max(env(safe-area-inset-top),0.75rem)] z-40 inline-flex items-center gap-2 rounded-lg border border-border bg-background/75 px-3 py-2 text-xs font-medium text-foreground shadow-lg backdrop-blur-md hover:bg-accent"
         >
           {isPanelOpen ? (
             <ChevronRight className="size-4" />
@@ -298,7 +334,9 @@ export default function App() {
         </button>
         <Suspense
           fallback={
-            <div className="h-full w-full animate-pulse bg-[linear-gradient(135deg,#111826,#0a1220)]" />
+            <div
+              className={`h-full w-full animate-pulse ${mapFallbackBackground}`}
+            />
           }
         >
           <LiveMap
@@ -313,17 +351,35 @@ export default function App() {
 
       {/* SIDEBAR */}
       {isPanelOpen && (
-      <aside className="border-t border-white/10 bg-[#090f19]/85 p-4 space-y-4 pb-[max(env(safe-area-inset-bottom),1rem)] backdrop-blur-xl md:border-t-0 md:border-l md:overflow-hidden">
+      <aside className="border-t border-slate-300/70 bg-slate-100/80 p-4 space-y-4 pb-[max(env(safe-area-inset-bottom),1rem)] backdrop-blur-xl dark:border-border dark:bg-background/80 md:border-t-0 md:border-l md:overflow-hidden">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold tracking-tight text-zinc-100">
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">
             Live Map
           </h1>
-          <Badge variant="secondary" className="bg-zinc-900/70 text-zinc-200">
-            {users.length} conectados
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="bg-slate-200/80 text-slate-700 dark:bg-secondary dark:text-secondary-foreground">
+              {users.length} conectados
+            </Badge>
+            <button
+              type="button"
+              onClick={() =>
+                setThemeMode((prev) => (prev === "dark" ? "light" : "dark"))
+              }
+              aria-label={
+                themeMode === "dark" ? "Ativar modo claro" : "Ativar modo escuro"
+              }
+              className="inline-flex size-8 items-center justify-center rounded-md border border-slate-300 bg-slate-100/70 text-foreground hover:bg-slate-200/80 dark:border-border dark:bg-background/70 dark:hover:bg-accent"
+            >
+              {themeMode === "dark" ? (
+                <Sun className="size-4" />
+              ) : (
+                <Moon className="size-4" />
+              )}
+            </button>
+          </div>
         </div>
 
-        <div className="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-xs text-zinc-300">
+        <div className="rounded-xl border border-slate-300/80 bg-slate-200/55 px-3 py-2 text-xs text-slate-600 dark:border-border dark:bg-muted/40 dark:text-muted-foreground">
           <span
             className={`mr-2 inline-block h-2 w-2 rounded-full ${
               isSocketConnected ? "bg-emerald-400" : "bg-amber-400"
@@ -332,10 +388,10 @@ export default function App() {
           {isSocketConnected ? "Canal realtime online" : "A reconectar..."}
         </div>
 
-        <Card className="border-white/10 bg-zinc-950/50 shadow-[0_12px_35px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+        <Card className="border-slate-300/80 bg-slate-100/75 shadow-[0_10px_26px_rgba(51,65,85,0.12)] backdrop-blur-xl dark:border-border dark:bg-card/80 dark:shadow-[0_12px_35px_rgba(0,0,0,0.18)]">
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
-              <CardTitle className="text-base text-zinc-100">
+              <CardTitle className="text-base text-foreground">
                 Minhas coordenadas
               </CardTitle>
               <button
@@ -346,7 +402,7 @@ export default function App() {
                     ? "Fechar minhas coordenadas"
                     : "Abrir minhas coordenadas"
                 }
-                className="inline-flex size-8 items-center justify-center rounded-md border border-white/15 bg-zinc-900/70 text-zinc-200 hover:bg-zinc-800"
+                className="inline-flex size-8 items-center justify-center rounded-md border border-slate-300 bg-slate-100/70 text-foreground hover:bg-slate-200/80 dark:border-border dark:bg-background/70 dark:hover:bg-accent"
               >
                 {isLocationOpen ? (
                   <ChevronUp className="size-4" />
@@ -360,13 +416,13 @@ export default function App() {
             <CardContent>
               {geoError ? (
                 <div className="space-y-3">
-                  <p className="text-sm text-red-300">{geoError}</p>
+                  <p className="text-sm text-destructive">{geoError}</p>
                   {canRetryGeo && (
                     <button
                       type="button"
                       onClick={retryGeolocation}
                       disabled={isGeoRetrying}
-                      className="inline-flex items-center rounded-lg border border-white/15 bg-zinc-900 px-3 py-1.5 text-xs text-zinc-100 hover:bg-zinc-800"
+                      className="inline-flex items-center rounded-lg border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs text-foreground hover:bg-slate-200/80 disabled:opacity-60 dark:border-border dark:bg-background dark:hover:bg-accent"
                     >
                       {isGeoRetrying ? (
                         <>
@@ -380,7 +436,7 @@ export default function App() {
                   )}
                 </div>
               ) : (
-                <p className="font-mono text-sm text-zinc-100">
+                <p className="font-mono text-sm text-foreground">
                   {me
                     ? `${formatCoord(me.lat)}, ${formatCoord(me.lng)}`
                     : "Aguardando permissão..."}
@@ -391,7 +447,7 @@ export default function App() {
         </Card>
 
         <Card
-          className={`flex overflow-hidden border-white/10 bg-zinc-950/50 shadow-[0_12px_35px_rgba(0,0,0,0.35)] backdrop-blur-xl ${
+          className={`flex overflow-hidden border-slate-300/80 bg-slate-100/75 shadow-[0_10px_26px_rgba(51,65,85,0.12)] backdrop-blur-xl dark:border-border dark:bg-card/80 dark:shadow-[0_12px_35px_rgba(0,0,0,0.18)] ${
             isUsersOpen
               ? "h-[40dvh] min-h-[220px] max-h-[420px] flex-col md:h-[calc(100dvh-252px)] md:max-h-none md:min-h-0"
               : ""
@@ -399,14 +455,14 @@ export default function App() {
         >
           <CardHeader>
             <div className="flex items-center justify-between gap-3">
-              <CardTitle className="text-base text-zinc-100">
+              <CardTitle className="text-base text-foreground">
                 Utilizadores
               </CardTitle>
               <button
                 type="button"
                 onClick={() => setIsUsersOpen((v) => !v)}
                 aria-label={isUsersOpen ? "Fechar utilizadores" : "Abrir utilizadores"}
-                className="inline-flex size-8 items-center justify-center rounded-md border border-white/15 bg-zinc-900/70 text-zinc-200 hover:bg-zinc-800"
+                className="inline-flex size-8 items-center justify-center rounded-md border border-slate-300 bg-slate-100/70 text-foreground hover:bg-slate-200/80 dark:border-border dark:bg-background/70 dark:hover:bg-accent"
               >
                 {isUsersOpen ? (
                   <ChevronUp className="size-4" />
@@ -425,8 +481,8 @@ export default function App() {
                       key={u.id}
                       className={`rounded-xl border p-3 transition ${
                         focusedUserId === u.id
-                          ? "border-cyan-400/70 bg-cyan-500/10"
-                          : "border-white/10 bg-black/25"
+                          ? "border-primary/70 bg-primary/10"
+                          : "border-slate-300/80 bg-slate-100/60 dark:border-border dark:bg-background/45"
                       } ${u.id === socket.id ? "opacity-70" : ""}`}
                     >
                       <button
@@ -437,13 +493,13 @@ export default function App() {
                           u.id === socket.id ? "cursor-not-allowed" : "cursor-pointer"
                         }`}
                       >
-                        <div className="flex justify-between text-xs text-zinc-400">
+                        <div className="flex justify-between text-xs text-muted-foreground">
                           <span className="font-mono">
                             {u.id.slice(0, 6)}… {u.id === socket.id ? "(eu)" : ""}
                           </span>
                           <span>{new Date(u.updatedAt).toLocaleTimeString()}</span>
                         </div>
-                        <div className="mt-1 font-mono text-sm text-zinc-100">
+                        <div className="mt-1 font-mono text-sm text-foreground">
                           {formatCoord(u.lat)}, {formatCoord(u.lng)}
                         </div>
                       </button>

@@ -21,8 +21,8 @@ import { X, Minus, Plus, Locate, Maximize, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const defaultStyles = {
-  dark: "https://basemaps.cartocdn.com/gl/dark-matter-nolabels-gl-style/style.json",
-  light: "https://basemaps.cartocdn.com/gl/positron-nolabels-gl-style/style.json",
+  dark: "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json",
+  light: "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json",
 };
 
 type Theme = "light" | "dark";
