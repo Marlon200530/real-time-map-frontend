@@ -502,7 +502,7 @@ function MarkerContent({ children, className }: MarkerContentProps) {
   const { marker } = useMarkerContext();
 
   return createPortal(
-    <div className={cn("relative cursor-pointer", className)}>
+    <div className={cn("relative cursor-pointer transition-transform duration-200 ease-out hover:scale-[1.04]", className)}>
       {children || <DefaultMarkerIcon />}
     </div>,
     marker.getElement()
@@ -511,7 +511,7 @@ function MarkerContent({ children, className }: MarkerContentProps) {
 
 function DefaultMarkerIcon() {
   return (
-    <div className="relative h-4 w-4 rounded-full border-2 border-white bg-blue-500 shadow-lg" />
+    <div className="relative h-4 w-4 rounded-full border-2 border-white bg-blue-500 shadow-lg transition-[transform,box-shadow,background-color,border-color] duration-200 ease-out" />
   );
 }
 
@@ -695,7 +695,7 @@ function MarkerLabel({
   return (
     <div
       className={cn(
-        "absolute left-1/2 -translate-x-1/2 whitespace-nowrap",
+        "absolute left-1/2 -translate-x-1/2 whitespace-nowrap transition-[background-color,border-color,color,transform,opacity] duration-200 ease-out",
         "text-[10px] font-medium text-foreground",
         positionClasses[position],
         className
@@ -732,7 +732,7 @@ const positionClasses = {
 
 function ControlGroup({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col rounded-md border border-border bg-background shadow-sm overflow-hidden [&>button:not(:last-child)]:border-b [&>button:not(:last-child)]:border-border">
+    <div className="flex flex-col overflow-hidden rounded-md border border-border bg-background shadow-sm transition-[background-color,border-color,box-shadow] duration-200 ease-out [&>button:not(:last-child)]:border-b [&>button:not(:last-child)]:border-border">
       {children}
     </div>
   );
@@ -755,7 +755,7 @@ function ControlButton({
       aria-label={label}
       type="button"
       className={cn(
-        "flex items-center justify-center size-8 hover:bg-accent dark:hover:bg-accent/40 transition-colors",
+        "flex size-8 items-center justify-center transition-[background-color,transform,color] duration-200 ease-out hover:bg-accent hover:scale-[1.03] active:scale-95 dark:hover:bg-accent/40",
         disabled && "opacity-50 pointer-events-none cursor-not-allowed"
       )}
       disabled={disabled}

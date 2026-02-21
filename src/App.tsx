@@ -311,24 +311,24 @@ export default function App() {
     <div
       className={`min-h-dvh ${shellBackground} md:h-dvh md:grid md:overflow-hidden ${
         isPanelOpen ? "md:grid-cols-[minmax(0,1fr)_380px]" : "md:grid-cols-1"
-      }`}
+      } transition-[background-image,grid-template-columns] duration-500 ease-out`}
     >
       {/* MAPA */}
       <section
         className={`relative min-h-[320px] md:h-full md:min-h-0 ${
           isPanelOpen ? "h-[62dvh]" : "h-dvh"
-        }`}
+        } transition-[height,min-height] duration-300 ease-out`}
       >
         <button
           type="button"
           onClick={() => setIsPanelOpen((v) => !v)}
           aria-label={isPanelOpen ? "Fechar painel" : "Abrir painel"}
-          className="fixed left-3 top-[max(env(safe-area-inset-top),0.75rem)] z-40 inline-flex items-center gap-2 rounded-lg border border-border bg-background/75 px-3 py-2 text-xs font-medium text-foreground shadow-lg backdrop-blur-md hover:bg-accent"
+          className="fixed left-3 top-[max(env(safe-area-inset-top),0.75rem)] z-40 inline-flex items-center gap-2 rounded-lg border border-border bg-background/75 px-3 py-2 text-xs font-medium text-foreground shadow-lg backdrop-blur-md transition-[background-color,color,transform,border-color,box-shadow] duration-200 ease-out hover:bg-accent active:scale-95"
         >
           {isPanelOpen ? (
-            <ChevronRight className="size-4" />
+            <ChevronRight className="size-4 transition-transform duration-200 ease-out" />
           ) : (
-            <ChevronLeft className="size-4" />
+            <ChevronLeft className="size-4 transition-transform duration-200 ease-out" />
           )}
           {isPanelOpen ? "Ocultar painel" : "Mostrar painel"}
         </button>
@@ -351,13 +351,13 @@ export default function App() {
 
       {/* SIDEBAR */}
       {isPanelOpen && (
-      <aside className="border-t border-slate-300/70 bg-slate-100/80 p-4 space-y-4 pb-[max(env(safe-area-inset-bottom),1rem)] backdrop-blur-xl dark:border-border dark:bg-background/80 md:border-t-0 md:border-l md:overflow-hidden">
+      <aside className="animate-in slide-in-from-bottom-2 duration-300 md:slide-in-from-right-2 border-t border-slate-300/70 bg-slate-100/80 p-4 space-y-4 pb-[max(env(safe-area-inset-bottom),1rem)] backdrop-blur-xl transition-[background-color,border-color] dark:border-border dark:bg-background/80 md:border-t-0 md:border-l md:overflow-hidden">
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold tracking-tight text-foreground">
             Live Map
           </h1>
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="bg-slate-200/80 text-slate-700 dark:bg-secondary dark:text-secondary-foreground">
+            <Badge variant="secondary" className="bg-slate-200/80 text-slate-700 transition-colors duration-200 dark:bg-secondary dark:text-secondary-foreground">
               {users.length} conectados
             </Badge>
             <button
@@ -368,18 +368,18 @@ export default function App() {
               aria-label={
                 themeMode === "dark" ? "Ativar modo claro" : "Ativar modo escuro"
               }
-              className="inline-flex size-8 items-center justify-center rounded-md border border-slate-300 bg-slate-100/70 text-foreground hover:bg-slate-200/80 dark:border-border dark:bg-background/70 dark:hover:bg-accent"
+              className="inline-flex size-8 items-center justify-center rounded-md border border-slate-300 bg-slate-100/70 text-foreground transition-[background-color,color,transform,border-color] duration-200 ease-out hover:bg-slate-200/80 active:scale-95 dark:border-border dark:bg-background/70 dark:hover:bg-accent"
             >
               {themeMode === "dark" ? (
-                <Sun className="size-4" />
+                <Sun className="size-4 transition-transform duration-200 ease-out" />
               ) : (
-                <Moon className="size-4" />
+                <Moon className="size-4 transition-transform duration-200 ease-out" />
               )}
             </button>
           </div>
         </div>
 
-        <div className="rounded-xl border border-slate-300/80 bg-slate-200/55 px-3 py-2 text-xs text-slate-600 dark:border-border dark:bg-muted/40 dark:text-muted-foreground">
+        <div className="rounded-xl border border-slate-300/80 bg-slate-200/55 px-3 py-2 text-xs text-slate-600 transition-[background-color,border-color,color] duration-200 dark:border-border dark:bg-muted/40 dark:text-muted-foreground">
           <span
             className={`mr-2 inline-block h-2 w-2 rounded-full ${
               isSocketConnected ? "bg-emerald-400" : "bg-amber-400"
@@ -402,18 +402,18 @@ export default function App() {
                     ? "Fechar minhas coordenadas"
                     : "Abrir minhas coordenadas"
                 }
-                className="inline-flex size-8 items-center justify-center rounded-md border border-slate-300 bg-slate-100/70 text-foreground hover:bg-slate-200/80 dark:border-border dark:bg-background/70 dark:hover:bg-accent"
+                className="inline-flex size-8 items-center justify-center rounded-md border border-slate-300 bg-slate-100/70 text-foreground transition-[background-color,color,transform,border-color] duration-200 ease-out hover:bg-slate-200/80 active:scale-95 dark:border-border dark:bg-background/70 dark:hover:bg-accent"
               >
                 {isLocationOpen ? (
-                  <ChevronUp className="size-4" />
+                  <ChevronUp className="size-4 transition-transform duration-200 ease-out" />
                 ) : (
-                  <ChevronDown className="size-4" />
+                  <ChevronDown className="size-4 transition-transform duration-200 ease-out" />
                 )}
               </button>
             </div>
           </CardHeader>
           {isLocationOpen && (
-            <CardContent>
+            <CardContent className="animate-in fade-in-0 slide-in-from-top-1 duration-200">
               {geoError ? (
                 <div className="space-y-3">
                   <p className="text-sm text-destructive">{geoError}</p>
@@ -422,7 +422,7 @@ export default function App() {
                       type="button"
                       onClick={retryGeolocation}
                       disabled={isGeoRetrying}
-                      className="inline-flex items-center rounded-lg border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs text-foreground hover:bg-slate-200/80 disabled:opacity-60 dark:border-border dark:bg-background dark:hover:bg-accent"
+                      className="inline-flex items-center rounded-lg border border-slate-300 bg-slate-100 px-3 py-1.5 text-xs text-foreground transition-[background-color,color,transform,border-color,opacity] duration-200 ease-out hover:bg-slate-200/80 active:scale-95 disabled:opacity-60 dark:border-border dark:bg-background dark:hover:bg-accent"
                     >
                       {isGeoRetrying ? (
                         <>
@@ -462,24 +462,24 @@ export default function App() {
                 type="button"
                 onClick={() => setIsUsersOpen((v) => !v)}
                 aria-label={isUsersOpen ? "Fechar utilizadores" : "Abrir utilizadores"}
-                className="inline-flex size-8 items-center justify-center rounded-md border border-slate-300 bg-slate-100/70 text-foreground hover:bg-slate-200/80 dark:border-border dark:bg-background/70 dark:hover:bg-accent"
+                className="inline-flex size-8 items-center justify-center rounded-md border border-slate-300 bg-slate-100/70 text-foreground transition-[background-color,color,transform,border-color] duration-200 ease-out hover:bg-slate-200/80 active:scale-95 dark:border-border dark:bg-background/70 dark:hover:bg-accent"
               >
                 {isUsersOpen ? (
-                  <ChevronUp className="size-4" />
+                  <ChevronUp className="size-4 transition-transform duration-200 ease-out" />
                 ) : (
-                  <ChevronDown className="size-4" />
+                  <ChevronDown className="size-4 transition-transform duration-200 ease-out" />
                 )}
               </button>
             </div>
           </CardHeader>
           {isUsersOpen && (
-            <CardContent className="min-h-0 flex-1 p-0">
+            <CardContent className="min-h-0 flex-1 animate-in fade-in-0 slide-in-from-top-1 duration-200 p-0">
               <div className="h-full overflow-y-auto overscroll-contain px-4 pb-4 [scrollbar-color:#3f4a5a_transparent]">
                 <ul className="space-y-3 pt-2">
                   {orderedUsers.map((u) => (
                     <li
                       key={u.id}
-                      className={`rounded-xl border p-3 transition ${
+                      className={`rounded-xl border p-3 transition-all duration-200 ease-out hover:-translate-y-0.5 ${
                         focusedUserId === u.id
                           ? "border-primary/70 bg-primary/10"
                           : "border-slate-300/80 bg-slate-100/60 dark:border-border dark:bg-background/45"
@@ -489,7 +489,7 @@ export default function App() {
                         type="button"
                         onClick={() => focusOnUser(u)}
                         disabled={u.id === socket.id}
-                        className={`w-full text-left ${
+                        className={`w-full text-left transition-opacity duration-200 ${
                           u.id === socket.id ? "cursor-not-allowed" : "cursor-pointer"
                         }`}
                       >
