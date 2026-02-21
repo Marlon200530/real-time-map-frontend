@@ -44,6 +44,7 @@ type MapFocusTarget = {
 export default function App() {
   const [me, setMe] = useState<LocationUpdate | null>(null);
   const [users, setUsers] = useState<LiveUser[]>([]);
+  const [userOrder, setUserOrder] = useState<string[]>([]);
   const [geoError, setGeoError] = useState<string | null>(getInitialGeoError);
   const [geoRetryNonce, setGeoRetryNonce] = useState(0);
   const [isSocketConnected, setIsSocketConnected] = useState(socket.connected);
@@ -130,10 +131,38 @@ export default function App() {
     };
   }, [geoRetryNonce]);
 
-  const sortedUsers = useMemo(
-    () => [...users].sort((a, b) => b.updatedAt - a.updatedAt),
-    [users]
-  );
+  // Mantem a ordem visual estável: cada user fica na posição em que entrou.
+  useEffect(() => {
+    setUserOrder((prev) => {
+      const activeIds = new Set(users.map((u) => u.id));
+      const kept = prev.filter((id) => activeIds.has(id));
+
+      const known = new Set(kept);
+      const additions: string[] = [];
+      for (const user of users) {
+        if (known.has(user.id)) continue;
+        additions.push(user.id);
+        known.add(user.id);
+      }
+
+      return [...kept, ...additions];
+    });
+  }, [users]);
+
+  const orderedUsers = useMemo(() => {
+    const byId = new Map(users.map((u) => [u.id, u] as const));
+    const ordered = userOrder
+      .map((id) => byId.get(id))
+      .filter((u): u is LiveUser => Boolean(u));
+
+    if (ordered.length === users.length) return ordered;
+
+    const existing = new Set(ordered.map((u) => u.id));
+    for (const user of users) {
+      if (!existing.has(user.id)) ordered.push(user);
+    }
+    return ordered;
+  }, [users, userOrder]);
 
   const canRetryGeo =
     typeof window !== "undefined" &&
@@ -296,7 +325,7 @@ export default function App() {
             <CardContent className="min-h-0 flex-1 p-0">
               <div className="h-full overflow-y-auto overscroll-contain px-4 pb-4 [scrollbar-color:#3f4a5a_transparent]">
                 <ul className="space-y-3 pt-2">
-                  {sortedUsers.map((u) => (
+                  {orderedUsers.map((u) => (
                     <li
                       key={u.id}
                       className={`rounded-xl border p-3 transition ${
